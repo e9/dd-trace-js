@@ -22,6 +22,7 @@ class DatadogSpan extends Span {
       [SAMPLE_RATE_METRIC_KEY]: sampler.rate()
     }
 
+    this._name = operationName
     this._parentTracer = tracer
     this._sampler = sampler
     this._recorder = recorder
@@ -32,6 +33,8 @@ class DatadogSpan extends Span {
     this._spanContext._name = operationName
     this._spanContext._tags = tags
     this._spanContext._metrics = metrics
+
+    platform.metrics().track(this)
   }
 
   toString () {

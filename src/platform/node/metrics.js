@@ -4,7 +4,7 @@ const v8 = require('v8')
 const path = require('path')
 const log = require('../../log')
 
-const INTERVAL = 10 * 1000
+const INTERVAL = 1 * 1000
 
 let nativeMetrics = null
 
@@ -19,12 +19,14 @@ reset()
 
 module.exports = function () {
   return metrics || (metrics = { // cache the metrics instance
-    start: () => {
+    start: (options) => {
       const StatsD = require('hot-shots')
+
+      options = options || {}
 
       try {
         nativeMetrics = require('node-gyp-build')(path.join(__dirname, '..', '..', '..'))
-        nativeMetrics.start()
+        nativeMetrics.start(options.debug)
       } catch (e) {
         log.error('Unable to load native metrics module. Some metrics will not be available.')
       }
@@ -68,6 +70,12 @@ module.exports = function () {
 
       clearInterval(interval)
       reset()
+    },
+
+    track (span) {
+      if (nativeMetrics) {
+        nativeMetrics.track(span)
+      }
     },
 
     increment: (name, count) => {
@@ -173,6 +181,8 @@ function captureNativeMetrics () {
   const elapsedTime = process.hrtime(time)
 
   time = process.hrtime()
+
+  console.log(stats.spans)
 
   const elapsedUs = elapsedTime[0] * 1e6 + elapsedTime[1] / 1e3
   const userPercent = 100 * stats.cpu.user / elapsedUs
